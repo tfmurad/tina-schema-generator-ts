@@ -1,0 +1,8 @@
+# Ignore the src directory
+src/
+
+*.log
+*.ts
+*.map
+node_modules/
+coverage/

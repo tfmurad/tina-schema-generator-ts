@@ -1,8 +1,49 @@
 #!/usr/bin/env node
 
-const fs = require("fs");
-const path = require("path");
-const matter = require("gray-matter");
+import * as fs from "fs";
+import * as path from "path";
+import matter from "gray-matter";
+
+interface Field {
+  name: string;
+  label: string;
+  type: string;
+  fields?: Field[];
+  list?: boolean;
+  description?: string;
+  isBody?: boolean;
+}
+
+interface Schema {
+  label: string;
+  name: string;
+  path: string;
+  format: string;
+  fields: Field[];
+  match?: {
+    include: string;
+    exclude?: string;
+  };
+  ui?: {
+    global: boolean;
+    allowedActions: {
+      create: boolean;
+      delete: boolean;
+    };
+  };
+}
+
+type FieldType =
+  | "string"
+  | "number"
+  | "bigint"
+  | "boolean"
+  | "symbol"
+  | "undefined"
+  | "object"
+  | "function"
+  | "array"
+  | "image";
 
 function main() {
   const contentDir = path.join("src", "content");
@@ -15,7 +56,7 @@ function main() {
 
   const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg"];
 
-  const humanize = (content) => {
+  const humanize = (content: string) => {
     return content
       .replace(/^[\s_]+|[\s_]+$/g, "")
       .replace(/[_\s]+/g, " ")
@@ -25,15 +66,15 @@ function main() {
       });
   };
 
-  const toCamelCase = (str) => {
+  const toCamelCase = (str: string) => {
     return str
       .replace(/-./g, (match) => match.charAt(1).toUpperCase())
       .replace(/\.md[x]?$/, "");
   };
 
-  const parseFields = (data) => {
+  const parseFields = (data: any): Field[] => {
     return Object.keys(data).map((key) => {
-      let fieldType = typeof data[key];
+      let fieldType: FieldType = typeof data[key];
       if (fieldType === "object" && Array.isArray(data[key])) {
         fieldType = "array";
       }
@@ -114,12 +155,12 @@ function main() {
   };
 
   const generateCollectionSchema = (
-    name,
-    collectionPath,
-    markdown,
-    type,
-    filename
-  ) => {
+    name: string,
+    collectionPath: string,
+    markdown: string,
+    type: "list" | "single",
+    filename: string
+  ): Schema => {
     const { data } = matter(markdown);
     const fields = parseFields(data);
 
@@ -135,7 +176,7 @@ function main() {
     const readableName = `${name}${type === "list" ? " List" : " Single"}`;
     const format = path.extname(filename).substring(1);
 
-    const schema = {
+    const schema: Schema = {
       label: humanize(readableName),
       name: schemaName,
       path: `src/content/${collectionPath}`,
@@ -160,10 +201,10 @@ function main() {
     return schema;
   };
 
-  const generateConfigSchema = (name, configData) => {
+  const generateConfigSchema = (name: string, configData: any) => {
     const fields = parseFields(configData);
 
-    const schema = {
+    const schema: Schema = {
       label: humanize(name),
       name: name,
       path: `src/config`,
@@ -184,7 +225,7 @@ function main() {
     return schema;
   };
 
-  const walkSync = (dir, filelist = []) => {
+  const walkSync = (dir: string, filelist: string[] = []): string[] => {
     const files = fs.readdirSync(dir);
     files.forEach((file) => {
       const filepath = path.join(dir, file);
@@ -196,23 +237,6 @@ function main() {
     });
     return filelist;
   };
-
-  const deleteFolderRecursive = (dirPath) => {
-    if (fs.existsSync(dirPath)) {
-      fs.readdirSync(dirPath).forEach((file) => {
-        const currentPath = path.join(dirPath, file);
-        if (fs.lstatSync(currentPath).isDirectory()) {
-          deleteFolderRecursive(currentPath);
-        } else {
-          fs.unlinkSync(currentPath);
-        }
-      });
-      fs.rmdirSync(dirPath);
-    }
-  };
-
-  // Delete the 'content' folder in the root directory
-  deleteFolderRecursive(rootContentDir);
 
   const markdownFiles = walkSync(contentDir).filter((file) => {
     const isMdx = file.endsWith(".mdx");
@@ -242,7 +266,7 @@ function main() {
       fileType,
       filename
     );
-
+    // @ts-ignore
     schemas[schemaName] = schema;
   });
 
@@ -251,7 +275,7 @@ function main() {
     const configName = path.basename(file, ".json");
     const configData = JSON.parse(fs.readFileSync(file, "utf8"));
     const schema = generateConfigSchema(configName, configData);
-
+    // @ts-ignore
     configSchemas[configName] = schema;
   });
 
@@ -266,6 +290,7 @@ function main() {
   Object.keys(schemas).forEach((key) => {
     const outputPath = path.join(outputDir, `${key}.js`);
     const schemaContent = `export default ${JSON.stringify(
+      // @ts-ignore
       schemas[key],
       null,
       2
@@ -278,6 +303,7 @@ function main() {
   Object.keys(configSchemas).forEach((key) => {
     const outputPath = path.join(globalDir, `${key}.js`);
     const schemaContent = `export default ${JSON.stringify(
+      // @ts-ignore
       configSchemas[key],
       null,
       2
@@ -291,7 +317,7 @@ function main() {
   let configContent = fs.readFileSync(configFilePath, "utf8");
 
   // Function to check if import statement exists in config.js
-  const importExists = (content, importPath) => {
+  const importExists = (content: string, importPath: string) => {
     const importRegex = new RegExp(
       `import\\s+\\w+\\s+from\\s+"${importPath}";`
     );
@@ -299,7 +325,7 @@ function main() {
   };
 
   // Function to check if collection exists in config.js
-  const collectionExists = (content, collectionName) => {
+  const collectionExists = (content: string, collectionName: string) => {
     const collectionRegex = new RegExp(`\\b${collectionName}\\b`);
     return collectionRegex.test(content);
   };
@@ -377,6 +403,23 @@ function main() {
   });
 
   fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+
+  const deleteFolderRecursive = (dirPath: string) => {
+    if (fs.existsSync(dirPath)) {
+      fs.readdirSync(dirPath).forEach((file) => {
+        const currentPath = path.join(dirPath, file);
+        if (fs.lstatSync(currentPath).isDirectory()) {
+          deleteFolderRecursive(currentPath);
+        } else {
+          fs.unlinkSync(currentPath);
+        }
+      });
+      fs.rmdirSync(dirPath);
+    }
+  };
+
+  // Delete the 'content' folder in the root directory
+  deleteFolderRecursive(rootContentDir);
 
   console.log(
     "\x1b[32m%s\x1b[0m \x1b[32m%s\x1b[0m",

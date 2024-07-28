@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
-const fs = require("fs");
-const path = require("path");
-const axios = require("axios");
-const { select } = require("@inquirer/prompts");
-const vm = require("vm");
+import fs from "fs";
+import path from "path";
+import axios from "axios";
+import { select } from "@inquirer/prompts";
+import vm from "vm";
 
 // Function to fetch and run script from URL
-async function fetchAndRunScript(url) {
+async function fetchAndRunScript(url: string) {
   try {
     const response = await axios.get(url);
     const script = new vm.Script(response.data);
@@ -41,13 +41,13 @@ const projectRoot = process.cwd();
 const tinaFolderPath = path.join(projectRoot, "tina");
 
 // Check if the 'tina' folder exists
-fs.access(tinaFolderPath, fs.constants.F_OK, (err) => {
+fs.access(tinaFolderPath, fs.constants.F_OK, (err: any) => {
   if (!err) {
     setup();
   } else {
     console.log(
       'The "tina" folder does not exist. Please visit the following link to install the Tina package first:'
     );
-    console.log("https://docs.astro.build/en/guides/cms/tina-cms/");
+    console.log("https://docs.astro.build/en/guides/cms/tina-cms");
   }
 });
