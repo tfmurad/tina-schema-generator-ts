@@ -1,7 +1,6 @@
 const commonjs = require("@rollup/plugin-commonjs");
 const typescript = require("@rollup/plugin-typescript");
 const resolve = require("@rollup/plugin-node-resolve");
-const json = require("@rollup/plugin-json");
 
 module.exports = [
   {
@@ -11,7 +10,7 @@ module.exports = [
       format: "cjs",
       banner: "#!/usr/bin/env node",
     },
-    plugins: [resolve(), commonjs(), typescript(), json()],
+    plugins: [resolve(), commonjs(), typescript()],
   },
   {
     input: "src/index.ts",
@@ -20,7 +19,7 @@ module.exports = [
       format: "es",
       banner: "#!/usr/bin/env node",
     },
-    plugins: [resolve(), commonjs(), typescript(), json()],
+    plugins: [resolve(), commonjs(), typescript()],
   },
   {
     input: "src/scripts/generate-tina-schema.ts",
@@ -36,6 +35,6 @@ module.exports = [
         banner: "#!/usr/bin/env node",
       },
     ],
-    plugins: [resolve(), commonjs(), typescript(), json()],
+    plugins: [resolve(), commonjs(), typescript()],
   },
 ];

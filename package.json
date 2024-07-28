@@ -6,7 +6,7 @@
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "bin": {
-    "tina-schema-generator-ts": "dist/index.cjs"
+    "tina-schema-generator": "dist/index.cjs"
   },
   "scripts": {
     "build": "rollup -c",

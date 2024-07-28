@@ -1,8 +1,37 @@
 #!/usr/bin/env node
 
 import * as fs from "fs";
-import matter from "gray-matter";
 import * as path from "path";
+import matter from "gray-matter";
+
+interface Field {
+  name: string;
+  label: string;
+  type: string;
+  fields?: Field[];
+  list?: boolean;
+  description?: string;
+  isBody?: boolean;
+}
+
+interface Schema {
+  label: string;
+  name: string;
+  path: string;
+  format: string;
+  fields: Field[];
+  match?: {
+    include: string;
+    exclude?: string;
+  };
+  ui?: {
+    global: boolean;
+    allowedActions: {
+      create: boolean;
+      delete: boolean;
+    };
+  };
+}
 
 interface Field {
   name: string;
