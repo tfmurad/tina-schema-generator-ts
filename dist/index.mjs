@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import require$$0$4 from 'fs';
+import fs$1 from 'fs';
 import require$$1 from 'path';
 import require$$0$2, { TextEncoder as TextEncoder$1 } from 'util';
 import stream, { Readable } from 'stream';
@@ -10,11 +10,11 @@ import require$$4$1 from 'assert';
 import zlib from 'zlib';
 import { EventEmitter } from 'events';
 import vm from 'vm';
-import require$$0$5 from 'node:tty';
+import require$$0$4 from 'node:tty';
 import process$2 from 'node:process';
 import * as readline$1 from 'node:readline';
 import { AsyncLocalStorage, AsyncResource } from 'node:async_hooks';
-import require$$0$6 from 'tty';
+import require$$0$5 from 'tty';
 
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
@@ -12537,7 +12537,7 @@ var path = require$$1;
 var http$1 = require$$3;
 var https$1 = require$$4;
 var parseUrl$2 = require$$0$3.parse;
-var fs = require$$0$4;
+var fs = fs$1;
 var Stream$1 = stream.Stream;
 var mime = mimeTypes;
 var asynckit = asynckit$1;
@@ -17868,7 +17868,7 @@ function useEffect(cb, depArray) {
     });
 }
 
-const tty = require$$0$5;
+const tty = require$$0$4;
 
 // eslint-disable-next-line no-warning-comments
 // TODO: Use a better method when it's added to Node.js (https://github.com/nodejs/node/pull/40240)
@@ -19809,7 +19809,7 @@ function normalizeOpts(options) {
   const defaultOpts = {
     defaultWidth: 0,
     output: process.stdout,
-    tty: require$$0$6,
+    tty: require$$0$5,
   };
 
   if (!options) {
@@ -22931,8 +22931,7 @@ var select = createPrompt((config, done) => {
     return `${[prefix, message, helpTipTop].filter(Boolean).join(' ')}\n${page}${helpTipBottom}${choiceDescription}${ansiEscapes.cursorHide}`;
 });
 
-// Function to fetch and run script from URL
-function fetchAndRunScript(url) {
+function fetchAndRunCjsScript(url) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             console.log(`Fetching script from URL: ${url}`);
@@ -22968,7 +22967,35 @@ function fetchAndRunScript(url) {
         }
     });
 }
-// Function to set up the package
+function fetchAndRunEsmScript(url) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            console.log(`Fetching script from URL: ${url}`);
+            const response = yield axios$1.get(url);
+            const scriptContent = response.data;
+            console.log("Script content fetched successfully.");
+            // Write the script to a temporary file
+            const tempScriptPath = require$$1.join(process.cwd(), "tempScript.mjs");
+            fs$1.writeFileSync(tempScriptPath, scriptContent);
+            // Dynamically import the script as an ES Module
+            const module = yield import(`file://${tempScriptPath}`);
+            // Ensure the function exists
+            if (typeof module.generateSchemas === "function") {
+                console.log("Found generateSchemas function, executing...");
+                module.generateSchemas();
+                console.log("generateSchemas executed successfully.");
+            }
+            else {
+                console.error("No function named 'generateSchemas' found in the script.");
+            }
+            // Clean up: Remove the temporary script file
+            fs$1.unlinkSync(tempScriptPath);
+        }
+        catch (error) {
+            console.error("Error fetching or running the script:", error.message);
+        }
+    });
+}
 function setup() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -22982,7 +23009,12 @@ function setup() {
             const scriptUrl = moduleType === "CommonJS"
                 ? "https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.cjs"
                 : "https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.mjs";
-            yield fetchAndRunScript(scriptUrl);
+            if (moduleType === "CommonJS") {
+                yield fetchAndRunCjsScript(scriptUrl);
+            }
+            else {
+                yield fetchAndRunEsmScript(scriptUrl);
+            }
         }
         catch (error) {
             console.error("Error during setup:", error.message);
@@ -22993,7 +23025,7 @@ function setup() {
 const projectRoot = process.cwd();
 const tinaFolderPath = require$$1.join(projectRoot, "tina");
 // Check if the 'tina' folder exists
-require$$0$4.access(tinaFolderPath, require$$0$4.constants.F_OK, (err) => {
+fs$1.access(tinaFolderPath, fs$1.constants.F_OK, (err) => {
     if (!err) {
         setup().catch((error) => console.error("Error in setup function:", error.message));
     }

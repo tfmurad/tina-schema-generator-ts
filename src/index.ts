@@ -6,8 +6,7 @@ import axios from "axios";
 import { select } from "@inquirer/prompts";
 import vm from "vm";
 
-// Function to fetch and run script from URL
-async function fetchAndRunScript(url: string) {
+async function fetchAndRunCjsScript(url: string) {
   try {
     console.log(`Fetching script from URL: ${url}`);
     const response = await axios.get(url);
@@ -43,7 +42,36 @@ async function fetchAndRunScript(url: string) {
   }
 }
 
-// Function to set up the package
+async function fetchAndRunEsmScript(url: string) {
+  try {
+    console.log(`Fetching script from URL: ${url}`);
+    const response = await axios.get(url);
+    const scriptContent = response.data;
+    console.log("Script content fetched successfully.");
+
+    // Write the script to a temporary file
+    const tempScriptPath = path.join(process.cwd(), "tempScript.mjs");
+    fs.writeFileSync(tempScriptPath, scriptContent);
+
+    // Dynamically import the script as an ES Module
+    const module = await import(`file://${tempScriptPath}`);
+
+    // Ensure the function exists
+    if (typeof module.generateSchemas === "function") {
+      console.log("Found generateSchemas function, executing...");
+      module.generateSchemas();
+      console.log("generateSchemas executed successfully.");
+    } else {
+      console.error("No function named 'generateSchemas' found in the script.");
+    }
+
+    // Clean up: Remove the temporary script file
+    fs.unlinkSync(tempScriptPath);
+  } catch (error: any) {
+    console.error("Error fetching or running the script:", error.message);
+  }
+}
+
 async function setup() {
   try {
     const moduleType = await select({
@@ -59,7 +87,11 @@ async function setup() {
         ? "https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.cjs"
         : "https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.mjs";
 
-    await fetchAndRunScript(scriptUrl);
+    if (moduleType === "CommonJS") {
+      await fetchAndRunCjsScript(scriptUrl);
+    } else {
+      await fetchAndRunEsmScript(scriptUrl);
+    }
   } catch (error: any) {
     console.error("Error during setup:", error.message);
   }
