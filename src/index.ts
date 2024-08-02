@@ -4,28 +4,32 @@ import fs from "fs";
 import path from "path";
 import axios from "axios";
 import { select } from "@inquirer/prompts";
-import vm from "vm";
 
-async function fetchAndRunCjsScript(url: string) {
+// Type definitions
+type ModuleType = "CommonJS" | "ES Modules";
+
+// Function to fetch and run CommonJS script
+async function fetchAndRunCjsScript(url: string): Promise<void> {
   try {
     console.log(`Fetching script from URL: ${url}`);
     const response = await axios.get(url);
-    const scriptContent = response.data;
+    const scriptContent = response.data as string;
     console.log("Script content fetched successfully.");
 
-    // Create a new context with CommonJS-like globals
-    const context = vm.createContext({
+    // Create a new VM context with CommonJS-like globals
+    const context = {
       require,
       console,
       process,
       Buffer,
       exports: {},
       module: { exports: {} },
-    });
+    };
 
     // Execute the script in the context
+    const vm = require("vm");
     const script = new vm.Script(scriptContent);
-    script.runInContext(context);
+    script.runInNewContext(context);
     console.log("Script executed in VM context.");
     console.log("Exports from script:", context.module.exports);
 
@@ -42,11 +46,12 @@ async function fetchAndRunCjsScript(url: string) {
   }
 }
 
-async function fetchAndRunEsmScript(url: string) {
+// Function to fetch and run ES Module script
+async function fetchAndRunEsmScript(url: string): Promise<void> {
   try {
     console.log(`Fetching script from URL: ${url}`);
     const response = await axios.get(url);
-    const scriptContent = response.data;
+    const scriptContent = response.data as string;
     console.log("Script content fetched successfully.");
 
     // Write the script to a temporary file
@@ -72,9 +77,10 @@ async function fetchAndRunEsmScript(url: string) {
   }
 }
 
-async function setup() {
+// Main setup function
+async function setup(): Promise<void> {
   try {
-    const moduleType = await select({
+    const moduleType: ModuleType = await select<ModuleType>({
       message: "Is your project using CommonJS or ES Modules?",
       choices: [
         { name: "CommonJS", value: "CommonJS" },
@@ -98,8 +104,8 @@ async function setup() {
 }
 
 // Path to check the 'tina' folder in the project root
-const projectRoot = process.cwd();
-const tinaFolderPath = path.join(projectRoot, "tina");
+const projectRoot: string = process.cwd();
+const tinaFolderPath: string = path.join(projectRoot, "tina");
 
 // Check if the 'tina' folder exists
 fs.access(tinaFolderPath, fs.constants.F_OK, (err) => {
