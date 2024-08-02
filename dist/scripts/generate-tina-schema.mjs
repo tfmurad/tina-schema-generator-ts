@@ -4955,24 +4955,18 @@ function generateSchemas() {
             .replace(/"/g, "'")};`;
         fs$1.writeFileSync(outputPath, schemaContent);
     });
-    // Function to remove existing collections in config.js
-    const clearExistingCollections = (content) => {
-        return content.replace(/collections:\s*\[\s*([\s\S]*?)\s*\],/, "collections: [],");
-    };
     // Read config.js content
     let configContent = fs$1.readFileSync(configFilePath, "utf8");
-    // Clear existing collections
-    configContent = clearExistingCollections(configContent);
     // Function to check if import statement exists in config.js
     const importExists = (content, importPath) => {
         const importRegex = new RegExp(`import\\s+\\w+\\s+from\\s+"${importPath}";`);
         return importRegex.test(content);
     };
     // Function to check if collection exists in config.js
-    // const collectionExists = (content: string, collectionName: string) => {
-    //   const collectionRegex = new RegExp(`\\b${collectionName}\\b`);
-    //   return collectionRegex.test(content);
-    // };
+    const collectionExists = (content, collectionName) => {
+        const collectionRegex = new RegExp(`\\b${collectionName}\\b`);
+        return collectionRegex.test(content);
+    };
     // Update config.js with import statements and collections
     const importStatements = Object.keys(schemas)
         .map((key) => {
@@ -4996,31 +4990,22 @@ function generateSchemas() {
     if (allImportStatements.length > 0) {
         configContent = configContent.replace(/import { defineConfig } from "tinacms";/, `import { defineConfig } from "tinacms";\n${allImportStatements.join("\n")}`);
     }
-    // const currentCollections =
-    //   (configContent.match(/collections:\s*\[\s*([\s\S]*?)\s*\],/) || [])[1] ||
-    //   "";
-    // const newCollections = Object.keys(schemas)
-    //   .concat(Object.keys(configSchemas))
-    //   .filter((key) => {
-    //     return !collectionExists(currentCollections, key);
-    //   });
-    // if (newCollections.length > 0) {
-    //   const allCollections = currentCollections
-    //     .split(",")
-    //     .map((collection) => collection.trim())
-    //     .filter(Boolean)
-    //     .concat(newCollections)
-    //     .join(",\n");
-    //   configContent = configContent.replace(
-    //     /collections:\s*\[\s*([\s\S]*?)\s*\],/,
-    //     `collections: [\n${allCollections}\n],`
-    //   );
-    // }
-    // Add new collections to config.js
+    const currentCollections = (configContent.match(/collections:\s*\[\s*([\s\S]*?)\s*\],/) || [])[1] ||
+        "";
     const newCollections = Object.keys(schemas)
         .concat(Object.keys(configSchemas))
-        .join(",\n");
-    configContent = configContent.replace(/collections:\s*\[\s*\],/, `collections: [\n${newCollections}\n],`);
+        .filter((key) => {
+        return !collectionExists(currentCollections, key);
+    });
+    if (newCollections.length > 0) {
+        const allCollections = currentCollections
+            .split(",")
+            .map((collection) => collection.trim())
+            .filter(Boolean)
+            .concat(newCollections)
+            .join(",\n");
+        configContent = configContent.replace(/collections:\s*\[\s*([\s\S]*?)\s*\],/, `collections: [\n${allCollections}\n],`);
+    }
     fs$1.writeFileSync(configFilePath, configContent);
     // Update package.json scripts
     const packageJsonPath = path.join("package.json");
