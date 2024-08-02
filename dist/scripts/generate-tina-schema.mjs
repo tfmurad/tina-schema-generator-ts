@@ -5035,6 +5035,5 @@ function generateSchemas() {
     deleteFolderRecursive(rootContentDir);
     console.log("\x1b[32m%s\x1b[0m \x1b[32m%s\x1b[0m", "➡ ", "Schemas generated, imports added to config.js successfully.");
 }
-module.exports = {
-    generateSchemas,
-};
+
+export { generateSchemas };

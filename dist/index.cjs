@@ -11,6 +11,7 @@ var require$$0$3 = require('url');
 var require$$4$1 = require('assert');
 var zlib = require('zlib');
 var events$1 = require('events');
+var vm = require('vm');
 var require$$0$4 = require('node:tty');
 var process$2 = require('node:process');
 var readline$1 = require('node:readline');
@@ -22951,7 +22952,7 @@ var select = createPrompt((config, done) => {
     return `${[prefix, message, helpTipTop].filter(Boolean).join(' ')}\n${page}${helpTipBottom}${choiceDescription}${ansiEscapes.cursorHide}`;
 });
 
-// Function to fetch and run CommonJS script
+// Function to fetch and run a CommonJS script
 function fetchAndRunCjsScript(url) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -22960,24 +22961,24 @@ function fetchAndRunCjsScript(url) {
             const scriptContent = response.data;
             console.log("Script content fetched successfully.");
             // Create a new VM context with CommonJS-like globals
-            const context = {
+            const context = vm.createContext({
                 require,
                 console,
                 process,
                 Buffer,
                 exports: {},
                 module: { exports: {} },
-            };
+            });
             // Execute the script in the context
-            const vm = require("vm");
             const script = new vm.Script(scriptContent);
-            script.runInNewContext(context);
+            script.runInContext(context);
             console.log("Script executed in VM context.");
             console.log("Exports from script:", context.module.exports);
             // Call the exported function
-            if (typeof context.module.exports.generateSchemas === "function") {
+            const { generateSchemas } = context.module.exports;
+            if (typeof generateSchemas === "function") {
                 console.log("Found generateSchemas function, executing...");
-                context.module.exports.generateSchemas();
+                generateSchemas();
                 console.log("generateSchemas executed successfully.");
             }
             else {
@@ -22989,7 +22990,7 @@ function fetchAndRunCjsScript(url) {
         }
     });
 }
-// Function to fetch and run ES Module script
+// Function to fetch and run an ES Module script
 function fetchAndRunEsmScript(url) {
     return __awaiter(this, void 0, void 0, function* () {
         try {

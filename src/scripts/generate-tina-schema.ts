@@ -46,7 +46,7 @@ type FieldType =
   | "image";
 
 // Refactor main logic into a function
-function generateSchemas() {
+export function generateSchemas() {
   const contentDir = path.join("src", "content");
   const outputDir = path.join("tina", "collections");
   const configDir = path.join("src", "config");
@@ -428,7 +428,3 @@ function generateSchemas() {
     "Schemas generated, imports added to config.js successfully."
   );
 }
-
-module.exports = {
-  generateSchemas,
-};
