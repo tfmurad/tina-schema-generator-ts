@@ -11,7 +11,6 @@ var require$$0$3 = require('url');
 var require$$4$1 = require('assert');
 var zlib = require('zlib');
 var events$1 = require('events');
-var vm = require('vm');
 var require$$0$4 = require('node:tty');
 var process$2 = require('node:process');
 var readline$1 = require('node:readline');
@@ -22952,6 +22951,7 @@ var select = createPrompt((config, done) => {
     return `${[prefix, message, helpTipTop].filter(Boolean).join(' ')}\n${page}${helpTipBottom}${choiceDescription}${ansiEscapes.cursorHide}`;
 });
 
+// Function to fetch and run CommonJS script
 function fetchAndRunCjsScript(url) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -22959,18 +22959,19 @@ function fetchAndRunCjsScript(url) {
             const response = yield axios$1.get(url);
             const scriptContent = response.data;
             console.log("Script content fetched successfully.");
-            // Create a new context with CommonJS-like globals
-            const context = vm.createContext({
+            // Create a new VM context with CommonJS-like globals
+            const context = {
                 require,
                 console,
                 process,
                 Buffer,
                 exports: {},
                 module: { exports: {} },
-            });
+            };
             // Execute the script in the context
+            const vm = require("vm");
             const script = new vm.Script(scriptContent);
-            script.runInContext(context);
+            script.runInNewContext(context);
             console.log("Script executed in VM context.");
             console.log("Exports from script:", context.module.exports);
             // Call the exported function
@@ -22988,6 +22989,7 @@ function fetchAndRunCjsScript(url) {
         }
     });
 }
+// Function to fetch and run ES Module script
 function fetchAndRunEsmScript(url) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -23017,6 +23019,7 @@ function fetchAndRunEsmScript(url) {
         }
     });
 }
+// Main setup function
 function setup() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
