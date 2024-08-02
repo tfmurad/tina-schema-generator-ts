@@ -22965,6 +22965,7 @@ function fetchAndRunScript(url) {
                 require,
                 console,
                 process,
+                Buffer,
                 exports: {},
                 module: { exports: {} },
             });

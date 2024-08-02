@@ -19,6 +19,7 @@ async function fetchAndRunScript(url: string) {
       require,
       console,
       process,
+      Buffer,
       exports: {},
       module: { exports: {} },
     });
