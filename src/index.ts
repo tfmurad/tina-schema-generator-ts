@@ -9,8 +9,10 @@ import vm from "vm";
 // Function to fetch and run script from URL
 async function fetchAndRunScript(url: string) {
   try {
+    console.log(`Fetching script from URL: ${url}`);
     const response = await axios.get(url);
     const scriptContent = response.data;
+    console.log("Script content fetched successfully.");
 
     // Create a new context with CommonJS-like globals
     const context = vm.createContext({
@@ -24,13 +26,17 @@ async function fetchAndRunScript(url: string) {
     // Execute the script in the context
     const script = new vm.Script(scriptContent);
     script.runInContext(context);
+    console.log("Script executed in VM context.");
+    console.log("Exports from script:", context.module.exports);
 
     // Call the exported function
-    // if (typeof context.module.exports.generateSchemas === "function") {
-    //   context.module.exports.generateSchemas();
-    // } else {
-    //   console.error("No function named 'generateSchemas' found in the script.");
-    // }
+    if (typeof context.module.exports.generateSchemas === "function") {
+      console.log("Found generateSchemas function, executing...");
+      context.module.exports.generateSchemas();
+      console.log("generateSchemas executed successfully.");
+    } else {
+      console.error("No function named 'generateSchemas' found in the script.");
+    }
   } catch (error: any) {
     console.error("Error fetching or running the script:", error.message);
   }
