@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import * as fs from "fs";
-import * as path from "path";
 import matter from "gray-matter";
+import * as path from "path";
 
 interface Field {
   name: string;
@@ -45,7 +45,8 @@ type FieldType =
   | "array"
   | "image";
 
-function main() {
+// Refactor main logic into a function
+export function generateSchemas() {
   const contentDir = path.join("src", "content");
   const outputDir = path.join("tina", "collections");
   const configDir = path.join("src", "config");
@@ -428,4 +429,7 @@ function main() {
   );
 }
 
-main();
+// Run the script if executed directly (for CLI usage)
+if (require.main === module) {
+  generateSchemas();
+}
