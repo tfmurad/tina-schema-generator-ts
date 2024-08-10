@@ -33,35 +33,6 @@ interface Schema {
   };
 }
 
-interface Field {
-  name: string;
-  label: string;
-  type: string;
-  fields?: Field[];
-  list?: boolean;
-  description?: string;
-  isBody?: boolean;
-}
-
-interface Schema {
-  label: string;
-  name: string;
-  path: string;
-  format: string;
-  fields: Field[];
-  match?: {
-    include: string;
-    exclude?: string;
-  };
-  ui?: {
-    global: boolean;
-    allowedActions: {
-      create: boolean;
-      delete: boolean;
-    };
-  };
-}
-
 type FieldType =
   | "string"
   | "number"
@@ -80,7 +51,13 @@ export function generateSchemas() {
   const outputDir = path.join("tina", "collections");
   const configDir = path.join("src", "config");
   const globalDir = path.join("tina", "global");
-  const configFilePath = path.join("tina", "config.js");
+
+  // Detect config file type
+  const configFilePathJs = path.join("tina", "config.js");
+  const configFilePathTs = path.join("tina", "config.ts");
+  const configFilePath = fs.existsSync(configFilePathTs)
+    ? configFilePathTs
+    : configFilePathJs;
 
   const rootContentDir = path.join("content");
 
@@ -278,8 +255,8 @@ export function generateSchemas() {
     ? walkSync(configDir).filter((file) => file.endsWith(".json"))
     : [];
 
-  const schemas = {};
-  const configSchemas = {};
+  const schemas: Record<string, Schema> = {};
+  const configSchemas: Record<string, Schema> = {};
 
   markdownFiles.forEach((file) => {
     const relativePath = path.relative(contentDir, file);
@@ -296,7 +273,6 @@ export function generateSchemas() {
       fileType,
       filename
     );
-    // @ts-ignore
     schemas[schemaName] = schema;
   });
 
@@ -305,7 +281,6 @@ export function generateSchemas() {
     const configName = path.basename(file, ".json");
     const configData = JSON.parse(fs.readFileSync(file, "utf8"));
     const schema = generateConfigSchema(configName, configData);
-    // @ts-ignore
     configSchemas[configName] = schema;
   });
 
@@ -320,7 +295,6 @@ export function generateSchemas() {
   Object.keys(schemas).forEach((key) => {
     const outputPath = path.join(outputDir, `${key}.js`);
     const schemaContent = `export default ${JSON.stringify(
-      // @ts-ignore
       schemas[key],
       null,
       2
@@ -333,7 +307,6 @@ export function generateSchemas() {
   Object.keys(configSchemas).forEach((key) => {
     const outputPath = path.join(globalDir, `${key}.js`);
     const schemaContent = `export default ${JSON.stringify(
-      // @ts-ignore
       configSchemas[key],
       null,
       2
@@ -343,24 +316,24 @@ export function generateSchemas() {
     fs.writeFileSync(outputPath, schemaContent);
   });
 
-  // Read config.js content
+  // Read config.js or config.ts content
   let configContent = fs.readFileSync(configFilePath, "utf8");
 
-  // Function to check if import statement exists in config.js
+  // Function to check if import statement exists in config.js or config.ts
   const importExists = (content: string, importPath: string) => {
     const importRegex = new RegExp(
-      `import\\s+\\w+\\s+from\\s+"${importPath}";`
+      `import\\s+\\w+\\s+from\\s+['"\`]${importPath}['"\`];`
     );
     return importRegex.test(content);
   };
 
-  // Function to check if collection exists in config.js
+  // Function to check if collection exists in config.js or config.ts
   const collectionExists = (content: string, collectionName: string) => {
     const collectionRegex = new RegExp(`\\b${collectionName}\\b`);
     return collectionRegex.test(content);
   };
 
-  // Update config.js with import statements and collections
+  // Update config.js or config.ts with import statements and collections
   const importStatements = Object.keys(schemas)
     .map((key) => {
       const importPath = `./collections/${key}`;
@@ -384,7 +357,7 @@ export function generateSchemas() {
   const allImportStatements = [...importStatements, ...globalImportStatements];
   if (allImportStatements.length > 0) {
     configContent = configContent.replace(
-      /import { defineConfig } from "tinacms";/,
+      /import { defineConfig } from ['"\`]tinacms['"\`];/,
       `import { defineConfig } from "tinacms";\n${allImportStatements.join(
         "\n"
       )}`
@@ -454,6 +427,6 @@ export function generateSchemas() {
   console.log(
     "\x1b[32m%s\x1b[0m \x1b[32m%s\x1b[0m",
     "➡ ",
-    "Schemas generated, imports added to config.js successfully."
+    "Schemas generated, imports added to config successfully."
   );
 }
