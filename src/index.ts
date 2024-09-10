@@ -7,9 +7,15 @@ import vm from 'vm';
 async function fetchAndRunScript(url: string, moduleType: any) {
   try {
     const response = await axios.get(url);
-    const scriptCode = response.data;
+    let scriptCode = response.data;
+
+    // Remove the shebang line if present
+    if (scriptCode.startsWith('#!/usr/bin/env node')) {
+      scriptCode = scriptCode.replace('#!/usr/bin/env node\n', '');
+    }
+
     const context = vm.createContext({ require, console, process });
-    
+
     if (moduleType === 'ES Modules') {
       // Wrap the script in an ES module context
       const esModuleScript = new vm.Script(`

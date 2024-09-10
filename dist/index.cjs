@@ -22933,7 +22933,11 @@ function fetchAndRunScript(url, moduleType) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const response = yield axios$1.get(url);
-            const scriptCode = response.data;
+            let scriptCode = response.data;
+            // Remove the shebang line if present
+            if (scriptCode.startsWith('#!/usr/bin/env node')) {
+                scriptCode = scriptCode.replace('#!/usr/bin/env node\n', '');
+            }
             const context = vm.createContext({ require, console, process });
             if (moduleType === 'ES Modules') {
                 // Wrap the script in an ES module context
