@@ -4,7 +4,7 @@ import axios from 'axios';
 import { select } from '@inquirer/prompts';
 import vm from 'vm';
 
-async function fetchAndRunScript(url: any, moduleType: any) {
+async function fetchAndRunScript(url: string, moduleType: any) {
   try {
     const response = await axios.get(url);
     let scriptCode = response.data;
@@ -37,15 +37,22 @@ async function fetchAndRunScript(url: any, moduleType: any) {
       const commonJSModuleScript = new vm.Script(`
         (function (exports, require, module, __filename, __dirname) {
           ${scriptCode}
-        }).call(this, context.exports, require, context.module, context.__filename, context.__dirname);
+        }).call(
+          this,
+          context.exports,
+          require,
+          context.module,
+          context.__filename,
+          context.__dirname
+        );
       `);
       commonJSModuleScript.runInContext(context);
     }
 
-    // Access the results from context if needed
+    // Optionally access the results from the CommonJS context
     const result = context.module.exports;
 
-    // Optionally return or use the result
+    // Use or log the result if needed
     console.log(result);
 
   } catch (error) {
