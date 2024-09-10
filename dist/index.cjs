@@ -22938,7 +22938,15 @@ function fetchAndRunScript(url, moduleType) {
             if (scriptCode.startsWith('#!/usr/bin/env node')) {
                 scriptCode = scriptCode.replace('#!/usr/bin/env node\n', '');
             }
-            const context = vm.createContext({ require, console, process });
+            const context = vm.createContext({
+                require,
+                console,
+                process,
+                __filename: 'script.js',
+                __dirname: process.cwd(),
+                exports: {},
+                module: { exports: {} },
+            });
             if (moduleType === 'ES Modules') {
                 // Wrap the script in an ES module context
                 const esModuleScript = new vm.Script(`
@@ -22954,11 +22962,11 @@ function fetchAndRunScript(url, moduleType) {
         (function (exports, require, module, __filename, __dirname) {
           ${scriptCode}
         })(
-          {},
+          context.exports,
           require,
-          module,
-          __filename,
-          __dirname
+          context.module,
+          context.__filename,
+          context.__dirname
         );
       `);
                 commonJSModuleScript.runInContext(context);
