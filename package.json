@@ -9,7 +9,7 @@
     "tina-schema-generator": "dist/index.cjs"
   },
   "scripts": {
-    "build": "rollup -c",
+    "build": "rollup -c --bundleConfigAsCjs",
     "generate-tina-schema-cjs": "node dist/scripts/generate-tina-schema.cjs",
     "generate-tina-schema-mjs": "node dist/scripts/generate-tina-schema.mjs"
   },
