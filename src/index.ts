@@ -1,54 +1,73 @@
 #!/usr/bin/env node
 
-import { select } from "@inquirer/prompts";
-import axios from "axios";
-import fs from "fs";
-import path from "path";
-import vm from "vm";
+import fs from 'fs';
+import path from 'path';
+import axios from 'axios';
+import { select } from '@inquirer/prompts';
 
 // Function to fetch and run script from URL
-async function fetchAndRunScript(url: string) {
+async function fetchAndRunScript(url: string, moduleType: string) {
   try {
     const response = await axios.get(url);
-    const script = new vm.Script(response.data);
-    const context = vm.createContext({ require, console, process, exports: {},
-      module: { exports: {} }, });
-    script.runInContext(context);
+    const scriptContent = response.data;
+
+    if (moduleType === 'CommonJS') {
+      // CommonJS context setup
+      const { createRequire} = await import('module') as any;
+      const require = createRequire(__filename);
+      const vm = await import('vm');
+      const script = new vm.Script(scriptContent);
+      const context = vm.createContext({
+        require,
+        console,
+        process,
+        exports: {},
+        module: { exports: {} },
+      });
+      script.runInContext(context);
+
+      // If the script exports something, you can access it here
+      console.log('Script output:', context.module.exports);
+    } else if (moduleType === 'ES Modules') {
+      // Dynamic import of ES Module
+      const module = await eval(`import('data:text/javascript;base64,${Buffer.from(scriptContent).toString('base64')}')`);
+      console.log('ES Module script output:', module);
+    }
   } catch (error) {
-    console.error("Error fetching or running the script:", error);
+    console.error('Error fetching or running the script:', error);
   }
 }
 
 // Function to set up the package
 async function setup() {
   const moduleType = await select({
-    message: "Is your project using CommonJS or ES Modules?",
+    message: 'Is your project using CommonJS or ES Modules?',
     choices: [
-      { name: "CommonJS", value: "CommonJS" },
-      { name: "ES Modules", value: "ES Modules" },
+      { name: 'CommonJS', value: 'CommonJS' },
+      { name: 'ES Modules', value: 'ES Modules' },
     ],
   });
 
   const scriptUrl =
-    moduleType === "CommonJS"
-      ? "https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.cjs"
-      : "https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.mjs";
+    moduleType === 'CommonJS'
+      ? 'https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.cjs'
+      : 'https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.mjs';
 
-  await fetchAndRunScript(scriptUrl);
+  await fetchAndRunScript(scriptUrl, moduleType);
 }
 
 // Path to check the 'tina' folder in the project root
 const projectRoot = process.cwd();
-const tinaFolderPath = path.join(projectRoot, "tina");
+const tinaFolderPath = path.join(projectRoot, 'tina');
 
 // Check if the 'tina' folder exists
-fs.access(tinaFolderPath, fs.constants.F_OK, (err: any) => {
+fs.access(tinaFolderPath, fs.constants.F_OK, (err) => {
   if (!err) {
     setup();
   } else {
     console.log(
       'The "tina" folder does not exist. Please visit the following link to install the Tina package first:'
     );
-    console.log("https://docs.astro.build/en/guides/cms/tina-cms");
+    console.log('https://docs.astro.build/en/guides/cms/tina-cms');
   }
 });
