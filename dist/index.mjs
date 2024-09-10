@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
+const prompts_1 = require("@inquirer/prompts");
+const axios_1 = tslib_1.__importDefault(require("axios"));
 const fs_1 = tslib_1.__importDefault(require("fs"));
 const path_1 = tslib_1.__importDefault(require("path"));
-const axios_1 = tslib_1.__importDefault(require("axios"));
-const prompts_1 = require("@inquirer/prompts");
 const vm_1 = tslib_1.__importDefault(require("vm"));
 // Function to fetch and run script from URL
 function fetchAndRunScript(url) {
@@ -12,7 +12,8 @@ function fetchAndRunScript(url) {
         try {
             const response = yield axios_1.default.get(url);
             const script = new vm_1.default.Script(response.data);
-            const context = vm_1.default.createContext({ require, console, process });
+            const context = vm_1.default.createContext({ require, console, process, exports: {},
+                module: { exports: {} }, });
             script.runInContext(context);
         }
         catch (error) {

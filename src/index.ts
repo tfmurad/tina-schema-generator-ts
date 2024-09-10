@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
+import { select } from "@inquirer/prompts";
+import axios from "axios";
 import fs from "fs";
 import path from "path";
-import axios from "axios";
-import { select } from "@inquirer/prompts";
 import vm from "vm";
 
 // Function to fetch and run script from URL
@@ -11,7 +11,8 @@ async function fetchAndRunScript(url: string) {
   try {
     const response = await axios.get(url);
     const script = new vm.Script(response.data);
-    const context = vm.createContext({ require, console, process });
+    const context = vm.createContext({ require, console, process, exports: {},
+      module: { exports: {} }, });
     script.runInContext(context);
   } catch (error) {
     console.error("Error fetching or running the script:", error);
