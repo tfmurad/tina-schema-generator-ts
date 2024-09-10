@@ -22954,7 +22954,7 @@ function fetchAndRunScript(url, moduleType) {
           ${scriptCode}
         })();
       `);
-                esModuleScript.runInContext(context);
+                yield esModuleScript.runInContext(context);
             }
             else {
                 // Wrap the script in a CommonJS context

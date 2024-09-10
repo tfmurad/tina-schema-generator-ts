@@ -4,7 +4,7 @@ import axios from 'axios';
 import { select } from '@inquirer/prompts';
 import vm from 'vm';
 
-async function fetchAndRunScript(url: string, moduleType: any) {
+async function fetchAndRunScript(url: any, moduleType: any) {
   try {
     const response = await axios.get(url);
     let scriptCode = response.data;
@@ -31,7 +31,7 @@ async function fetchAndRunScript(url: string, moduleType: any) {
           ${scriptCode}
         })();
       `);
-      esModuleScript.runInContext(context);
+      await esModuleScript.runInContext(context);
     } else {
       // Wrap the script in a CommonJS context
       const commonJSModuleScript = new vm.Script(`
