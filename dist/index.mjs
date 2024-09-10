@@ -22915,6 +22915,7 @@ function fetchAndRunScript(url, moduleType) {
         try {
             const response = yield axios$1.get(url);
             const scriptContent = response.data;
+            console.log('Fetched script content:', scriptContent);
             if (moduleType === 'CommonJS') {
                 // CommonJS context setup
                 const require = createRequire(__filename);
@@ -22929,7 +22930,6 @@ function fetchAndRunScript(url, moduleType) {
                     __dirname: process.cwd()
                 });
                 script.runInContext(context);
-                // If the script exports something, you can access it here
                 console.log('Script output:', context.module.exports);
             }
             else if (moduleType === 'ES Modules') {
