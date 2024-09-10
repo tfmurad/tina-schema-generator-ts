@@ -1,90 +1,54 @@
-import fs from 'fs';
-import path from 'path';
-import axios from 'axios';
-import { select } from '@inquirer/prompts';
-import vm from 'vm';
+#!/usr/bin/env node
 
-async function fetchAndRunScript(url: any, moduleType: any) {
+import fs from "fs";
+import path from "path";
+import axios from "axios";
+import { select } from "@inquirer/prompts";
+import vm from "vm";
+
+// Function to fetch and run script from URL
+async function fetchAndRunScript(url: string) {
   try {
     const response = await axios.get(url);
-    let scriptCode = response.data;
-
-    // Remove the shebang line if present
-    if (scriptCode.startsWith('#!/usr/bin/env node')) {
-      scriptCode = scriptCode.replace('#!/usr/bin/env node\n', '');
-    }
-
-    const context = vm.createContext({
-      require,
-      console,
-      process,
-      __filename: 'script.js',
-      __dirname: process.cwd(),
-      exports: {},
-      module: { exports: {} },
-    });
-
-    if (moduleType === 'ES Modules') {
-      // Wrap the script in an ES module context
-      const esModuleScript = new vm.Script(`
-        (async () => {
-          ${scriptCode}
-        })();
-      `);
-      await esModuleScript.runInContext(context);
-    } else {
-      // Wrap the script in a CommonJS context
-      const commonJSModuleScript = new vm.Script(`
-        (function (exports, require, module, __filename, __dirname) {
-          ${scriptCode}
-        }).call(
-          this,
-          context.exports,
-          require,
-          context.module,
-          context.__filename,
-          context.__dirname
-        );
-      `);
-      commonJSModuleScript.runInContext(context);
-    }
-
-    // Optionally access the results from the CommonJS context
-    const result = context.module.exports;
-
-    // Use or log the result if needed
-    console.log(result);
-
+    const script = new vm.Script(response.data);
+    const context = vm.createContext({ require, console, process });
+    script.runInContext(context);
   } catch (error) {
-    console.error('Error fetching or running the script:', error);
+    console.error("Error fetching or running the script:", error);
   }
 }
 
+// Function to set up the package
 async function setup() {
   const moduleType = await select({
-    message: 'Is your project using CommonJS or ES Modules?',
+    message: "Is your project using CommonJS or ES Modules?",
     choices: [
-      { name: 'CommonJS', value: 'CommonJS' },
-      { name: 'ES Modules', value: 'ES Modules' },
+      { name: "CommonJS", value: "CommonJS" },
+      { name: "ES Modules", value: "ES Modules" },
     ],
   });
 
   const scriptUrl =
-    moduleType === 'CommonJS'
-      ? 'https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.cjs'
-      : 'https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.mjs';
+    moduleType === "CommonJS"
+      ? "https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.cjs"
+      : "https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.mjs";
 
-  await fetchAndRunScript(scriptUrl, moduleType);
+  await fetchAndRunScript(scriptUrl);
 }
 
+// Path to check the 'tina' folder in the project root
 const projectRoot = process.cwd();
-const tinaFolderPath = path.join(projectRoot, 'tina');
+const tinaFolderPath = path.join(projectRoot, "tina");
 
-fs.access(tinaFolderPath, fs.constants.F_OK, (err) => {
+// Check if the 'tina' folder exists
+fs.access(tinaFolderPath, fs.constants.F_OK, (err: any) => {
   if (!err) {
     setup();
   } else {
-    console.log('The "tina" folder does not exist. Please visit the following link to install the Tina package first:');
-    console.log('https://docs.astro.build/en/guides/cms/tina-cms');
+    console.log(
+      'The "tina" folder does not exist. Please visit the following link to install the Tina package first:'
+    );
+    console.log("https://docs.astro.build/en/guides/cms/tina-cms");
   }
 });
+  

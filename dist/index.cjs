@@ -64,6 +64,34 @@ function __awaiter(thisArg, _arguments, P, generator) {
     });
 }
 
+function __generator(thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+}
+
 typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
     var e = new Error(message);
     return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
@@ -22929,82 +22957,66 @@ var select = createPrompt((config, done) => {
     return `${[prefix, message, helpTipTop].filter(Boolean).join(' ')}\n${page}${helpTipBottom}${choiceDescription}${ansiEscapes.cursorHide}`;
 });
 
-function fetchAndRunScript(url, moduleType) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const response = yield axios$1.get(url);
-            let scriptCode = response.data;
-            // Remove the shebang line if present
-            if (scriptCode.startsWith('#!/usr/bin/env node')) {
-                scriptCode = scriptCode.replace('#!/usr/bin/env node\n', '');
+// Function to fetch and run script from URL
+function fetchAndRunScript(url) {
+    return __awaiter(this, void 0, void 0, function () {
+        var response, script, context, error_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    return [4 /*yield*/, axios$1.get(url)];
+                case 1:
+                    response = _a.sent();
+                    script = new vm.Script(response.data);
+                    context = vm.createContext({ require: require, console: console, process: process });
+                    script.runInContext(context);
+                    return [3 /*break*/, 3];
+                case 2:
+                    error_1 = _a.sent();
+                    console.error("Error fetching or running the script:", error_1);
+                    return [3 /*break*/, 3];
+                case 3: return [2 /*return*/];
             }
-            const context = vm.createContext({
-                require,
-                console,
-                process,
-                __filename: 'script.js',
-                __dirname: process.cwd(),
-                exports: {},
-                module: { exports: {} },
-            });
-            if (moduleType === 'ES Modules') {
-                // Wrap the script in an ES module context
-                const esModuleScript = new vm.Script(`
-        (async () => {
-          ${scriptCode}
-        })();
-      `);
-                yield esModuleScript.runInContext(context);
-            }
-            else {
-                // Wrap the script in a CommonJS context
-                const commonJSModuleScript = new vm.Script(`
-        (function (exports, require, module, __filename, __dirname) {
-          ${scriptCode}
-        }).call(
-          this,
-          context.exports,
-          require,
-          context.module,
-          context.__filename,
-          context.__dirname
-        );
-      `);
-                commonJSModuleScript.runInContext(context);
-            }
-            // Optionally access the results from the CommonJS context
-            const result = context.module.exports;
-            // Use or log the result if needed
-            console.log(result);
-        }
-        catch (error) {
-            console.error('Error fetching or running the script:', error);
-        }
-    });
-}
-function setup() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const moduleType = yield select({
-            message: 'Is your project using CommonJS or ES Modules?',
-            choices: [
-                { name: 'CommonJS', value: 'CommonJS' },
-                { name: 'ES Modules', value: 'ES Modules' },
-            ],
         });
-        const scriptUrl = moduleType === 'CommonJS'
-            ? 'https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.cjs'
-            : 'https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.mjs';
-        yield fetchAndRunScript(scriptUrl, moduleType);
     });
 }
-const projectRoot = process.cwd();
-const tinaFolderPath = require$$1.join(projectRoot, 'tina');
-require$$0$4.access(tinaFolderPath, require$$0$4.constants.F_OK, (err) => {
+// Function to set up the package
+function setup() {
+    return __awaiter(this, void 0, void 0, function () {
+        var moduleType, scriptUrl;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, select({
+                        message: "Is your project using CommonJS or ES Modules?",
+                        choices: [
+                            { name: "CommonJS", value: "CommonJS" },
+                            { name: "ES Modules", value: "ES Modules" },
+                        ],
+                    })];
+                case 1:
+                    moduleType = _a.sent();
+                    scriptUrl = moduleType === "CommonJS"
+                        ? "https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.cjs"
+                        : "https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.mjs";
+                    return [4 /*yield*/, fetchAndRunScript(scriptUrl)];
+                case 2:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+// Path to check the 'tina' folder in the project root
+var projectRoot = process.cwd();
+var tinaFolderPath = require$$1.join(projectRoot, "tina");
+// Check if the 'tina' folder exists
+require$$0$4.access(tinaFolderPath, require$$0$4.constants.F_OK, function (err) {
     if (!err) {
         setup();
     }
     else {
         console.log('The "tina" folder does not exist. Please visit the following link to install the Tina package first:');
-        console.log('https://docs.astro.build/en/guides/cms/tina-cms');
+        console.log("https://docs.astro.build/en/guides/cms/tina-cms");
     }
 });
