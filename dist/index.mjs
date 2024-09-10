@@ -5,6 +5,8 @@ const fs_1 = tslib_1.__importDefault(require("fs"));
 const path_1 = tslib_1.__importDefault(require("path"));
 const axios_1 = tslib_1.__importDefault(require("axios"));
 const prompts_1 = require("@inquirer/prompts");
+const module_1 = require("module");
+const vm_1 = tslib_1.__importDefault(require("vm"));
 // Function to fetch and run script from URL
 function fetchAndRunScript(url, moduleType) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -13,16 +15,16 @@ function fetchAndRunScript(url, moduleType) {
             const scriptContent = response.data;
             if (moduleType === 'CommonJS') {
                 // CommonJS context setup
-                const { createRequire } = yield Promise.resolve().then(() => tslib_1.__importStar(require('module')));
-                const require = createRequire(__filename);
-                const vm = yield Promise.resolve().then(() => tslib_1.__importStar(require('vm')));
-                const script = new vm.Script(scriptContent);
-                const context = vm.createContext({
+                const require = (0, module_1.createRequire)(__filename);
+                const script = new vm_1.default.Script(scriptContent);
+                const context = vm_1.default.createContext({
                     require,
                     console,
                     process,
                     exports: {},
                     module: { exports: {} },
+                    __filename: 'script.js',
+                    __dirname: process.cwd()
                 });
                 script.runInContext(context);
                 // If the script exports something, you can access it here
@@ -30,7 +32,7 @@ function fetchAndRunScript(url, moduleType) {
             }
             else if (moduleType === 'ES Modules') {
                 // Dynamic import of ES Module
-                const module = yield eval(`import('data:text/javascript;base64,${Buffer.from(scriptContent).toString('base64')}')`);
+                const module = yield Promise.resolve(`${`data:text/javascript;base64,${Buffer.from(scriptContent).toString('base64')}`}`).then(s => tslib_1.__importStar(require(s)));
                 console.log('ES Module script output:', module);
             }
         }

@@ -4,18 +4,18 @@ import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 import { select } from '@inquirer/prompts';
+import { createRequire } from 'module';
+import vm from 'vm';
 
 // Function to fetch and run script from URL
-async function fetchAndRunScript(url: string, moduleType: string) {
+async function fetchAndRunScript(url: string, moduleType: 'CommonJS' | 'ES Modules') {
   try {
     const response = await axios.get(url);
     const scriptContent = response.data;
 
     if (moduleType === 'CommonJS') {
       // CommonJS context setup
-      const { createRequire} = await import('module') as any;
       const require = createRequire(__filename);
-      const vm = await import('vm');
       const script = new vm.Script(scriptContent);
       const context = vm.createContext({
         require,
@@ -23,6 +23,8 @@ async function fetchAndRunScript(url: string, moduleType: string) {
         process,
         exports: {},
         module: { exports: {} },
+        __filename: 'script.js',
+        __dirname: process.cwd()
       });
       script.runInContext(context);
 
@@ -30,7 +32,7 @@ async function fetchAndRunScript(url: string, moduleType: string) {
       console.log('Script output:', context.module.exports);
     } else if (moduleType === 'ES Modules') {
       // Dynamic import of ES Module
-      const module = await eval(`import('data:text/javascript;base64,${Buffer.from(scriptContent).toString('base64')}')`);
+      const module = await import(`data:text/javascript;base64,${Buffer.from(scriptContent).toString('base64')}`);
       console.log('ES Module script output:', module);
     }
   } catch (error) {
@@ -53,7 +55,7 @@ async function setup() {
       ? 'https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.cjs'
       : 'https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.mjs';
 
-  await fetchAndRunScript(scriptUrl, moduleType);
+  await fetchAndRunScript(scriptUrl, moduleType as 'CommonJS' | 'ES Modules');
 }
 
 // Path to check the 'tina' folder in the project root
