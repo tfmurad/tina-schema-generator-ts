@@ -22908,46 +22908,65 @@ var select = createPrompt((config, done) => {
     return `${[prefix, message, helpTipTop].filter(Boolean).join(' ')}\n${page}${helpTipBottom}${choiceDescription}${ansiEscapes.cursorHide}`;
 });
 
-// Function to fetch and run script from URL
-function fetchAndRunScript(url) {
+function fetchAndRunScript(url, moduleType) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const response = yield axios$1.get(url);
-            const script = new vm.Script(response.data);
+            const scriptCode = response.data;
             const context = vm.createContext({ require, console, process });
-            script.runInContext(context);
+            if (moduleType === 'ES Modules') {
+                // Wrap the script in an ES module context
+                const esModuleScript = new vm.Script(`
+        (async () => {
+          ${scriptCode}
+        })();
+      `);
+                esModuleScript.runInContext(context);
+            }
+            else {
+                // Wrap the script in a CommonJS context
+                const commonJSModuleScript = new vm.Script(`
+        (function (exports, require, module, __filename, __dirname) {
+          ${scriptCode}
+        })(
+          {},
+          require,
+          module,
+          __filename,
+          __dirname
+        );
+      `);
+                commonJSModuleScript.runInContext(context);
+            }
         }
         catch (error) {
-            console.error("Error fetching or running the script:", error);
+            console.error('Error fetching or running the script:', error);
         }
     });
 }
-// Function to set up the package
 function setup() {
     return __awaiter(this, void 0, void 0, function* () {
         const moduleType = yield select({
-            message: "Is your project using CommonJS or ES Modules?",
+            message: 'Is your project using CommonJS or ES Modules?',
             choices: [
-                { name: "CommonJS", value: "CommonJS" },
-                { name: "ES Modules", value: "ES Modules" },
+                { name: 'CommonJS', value: 'CommonJS' },
+                { name: 'ES Modules', value: 'ES Modules' },
             ],
         });
-        const scriptUrl = moduleType === "CommonJS"
-            ? "https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.cjs"
-            : "https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.mjs";
-        yield fetchAndRunScript(scriptUrl);
+        const scriptUrl = moduleType === 'CommonJS'
+            ? 'https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.cjs'
+            : 'https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.mjs';
+        yield fetchAndRunScript(scriptUrl, moduleType);
     });
 }
-// Path to check the 'tina' folder in the project root
 const projectRoot = process.cwd();
-const tinaFolderPath = require$$1.join(projectRoot, "tina");
-// Check if the 'tina' folder exists
+const tinaFolderPath = require$$1.join(projectRoot, 'tina');
 require$$0$4.access(tinaFolderPath, require$$0$4.constants.F_OK, (err) => {
     if (!err) {
         setup();
     }
     else {
         console.log('The "tina" folder does not exist. Please visit the following link to install the Tina package first:');
-        console.log("https://docs.astro.build/en/guides/cms/tina-cms");
+        console.log('https://docs.astro.build/en/guides/cms/tina-cms');
     }
 });
