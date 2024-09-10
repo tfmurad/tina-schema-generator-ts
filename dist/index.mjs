@@ -7,33 +7,13 @@ const axios_1 = tslib_1.__importDefault(require("axios"));
 const prompts_1 = require("@inquirer/prompts");
 const vm_1 = tslib_1.__importDefault(require("vm"));
 // Function to fetch and run script from URL
-function fetchAndRunScript(url, moduleType) {
+function fetchAndRunScript(url) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         try {
             const response = yield axios_1.default.get(url);
-            if (moduleType === "CommonJS") {
-                // CommonJS context setup
-                const script = new vm_1.default.Script(response.data);
-                const context = vm_1.default.createContext({
-                    require,
-                    console,
-                    process,
-                    exports: {},
-                    module: { exports: {} },
-                });
-                script.runInContext(context);
-                // If the script exports something, you can access it here
-                console.log("Script output:", context.module.exports);
-            }
-            else if (moduleType === "ES Modules") {
-                // Dynamically import ES module
-                const blob = new Blob([response.data], { type: "application/javascript" });
-                const urlObject = URL.createObjectURL(blob);
-                const module = yield Promise.resolve(`${urlObject}`).then(s => tslib_1.__importStar(require(s)));
-                console.log("ES Module script output:", module);
-                // Revoke the object URL to avoid memory leaks
-                URL.revokeObjectURL(urlObject);
-            }
+            const script = new vm_1.default.Script(response.data);
+            const context = vm_1.default.createContext({ require, console, process });
+            script.runInContext(context);
         }
         catch (error) {
             console.error("Error fetching or running the script:", error);
@@ -53,7 +33,7 @@ function setup() {
         const scriptUrl = moduleType === "CommonJS"
             ? "https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.cjs"
             : "https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.mjs";
-        yield fetchAndRunScript(scriptUrl, moduleType);
+        yield fetchAndRunScript(scriptUrl);
     });
 }
 // Path to check the 'tina' folder in the project root
