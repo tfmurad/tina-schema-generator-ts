@@ -22961,16 +22961,14 @@ function fetchAndRunScript(url, moduleType) {
                 const commonJSModuleScript = new vm.Script(`
         (function (exports, require, module, __filename, __dirname) {
           ${scriptCode}
-        })(
-          context.exports,
-          require,
-          context.module,
-          context.__filename,
-          context.__dirname
-        );
+        }).call(this, context.exports, require, context.module, context.__filename, context.__dirname);
       `);
                 commonJSModuleScript.runInContext(context);
             }
+            // Access the results from context if needed
+            const result = context.module.exports;
+            // Optionally return or use the result
+            console.log(result);
         }
         catch (error) {
             console.error('Error fetching or running the script:', error);
