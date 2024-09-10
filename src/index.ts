@@ -7,12 +7,35 @@ import { select } from "@inquirer/prompts";
 import vm from "vm";
 
 // Function to fetch and run script from URL
-async function fetchAndRunScript(url: string) {
+async function fetchAndRunScript(url: string, moduleType: string) {
   try {
     const response = await axios.get(url);
-    const script = new vm.Script(response.data);
-    const context = vm.createContext({ require, console, process });
-    script.runInContext(context);
+
+    if (moduleType === "CommonJS") {
+      // CommonJS context setup
+      const script = new vm.Script(response.data);
+      const context = vm.createContext({
+        require,
+        console,
+        process,
+        exports: {},
+        module: { exports: {} },
+      });
+      script.runInContext(context);
+
+      // If the script exports something, you can access it here
+      console.log("Script output:", context.module.exports);
+    } else if (moduleType === "ES Modules") {
+      // Dynamically import ES module
+      const blob = new Blob([response.data], { type: "application/javascript" });
+      const urlObject = URL.createObjectURL(blob);
+
+      const module = await import(urlObject);
+      console.log("ES Module script output:", module);
+      
+      // Revoke the object URL to avoid memory leaks
+      URL.revokeObjectURL(urlObject);
+    }
   } catch (error) {
     console.error("Error fetching or running the script:", error);
   }
@@ -33,7 +56,7 @@ async function setup() {
       ? "https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.cjs"
       : "https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.mjs";
 
-  await fetchAndRunScript(scriptUrl);
+  await fetchAndRunScript(scriptUrl, moduleType);
 }
 
 // Path to check the 'tina' folder in the project root
