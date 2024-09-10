@@ -9,7 +9,6 @@ import require$$0$3 from 'url';
 import require$$4$1 from 'assert';
 import zlib from 'zlib';
 import { EventEmitter } from 'events';
-import { createRequire } from 'module';
 import vm from 'vm';
 import require$$0$5 from 'node:tty';
 import process$2 from 'node:process';
@@ -22910,36 +22909,16 @@ var select = createPrompt((config, done) => {
 });
 
 // Function to fetch and run script from URL
-function fetchAndRunScript(url, moduleType) {
+function fetchAndRunScript(url) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const response = yield axios$1.get(url);
-            const scriptContent = response.data;
-            console.log('Fetched script content:', scriptContent);
-            if (moduleType === 'CommonJS') {
-                // CommonJS context setup
-                const require = createRequire(__filename);
-                const script = new vm.Script(scriptContent);
-                const context = vm.createContext({
-                    require,
-                    console,
-                    process,
-                    exports: {},
-                    module: { exports: {} },
-                    __filename: 'script.js',
-                    __dirname: process.cwd()
-                });
-                script.runInContext(context);
-                console.log('Script output:', context.module.exports);
-            }
-            else if (moduleType === 'ES Modules') {
-                // Dynamic import of ES Module
-                const module = yield import(`data:text/javascript;base64,${Buffer.from(scriptContent).toString('base64')}`);
-                console.log('ES Module script output:', module);
-            }
+            const script = new vm.Script(response.data);
+            const context = vm.createContext({ require, console, process });
+            script.runInContext(context);
         }
         catch (error) {
-            console.error('Error fetching or running the script:', error);
+            console.error("Error fetching or running the script:", error);
         }
     });
 }
@@ -22947,21 +22926,21 @@ function fetchAndRunScript(url, moduleType) {
 function setup() {
     return __awaiter(this, void 0, void 0, function* () {
         const moduleType = yield select({
-            message: 'Is your project using CommonJS or ES Modules?',
+            message: "Is your project using CommonJS or ES Modules?",
             choices: [
-                { name: 'CommonJS', value: 'CommonJS' },
-                { name: 'ES Modules', value: 'ES Modules' },
+                { name: "CommonJS", value: "CommonJS" },
+                { name: "ES Modules", value: "ES Modules" },
             ],
         });
-        const scriptUrl = moduleType === 'CommonJS'
-            ? 'https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.cjs'
-            : 'https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.mjs';
-        yield fetchAndRunScript(scriptUrl, moduleType);
+        const scriptUrl = moduleType === "CommonJS"
+            ? "https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.cjs"
+            : "https://raw.githubusercontent.com/tfmurad/tina-schema-generator-ts/main/dist/scripts/generate-tina-schema.mjs";
+        yield fetchAndRunScript(scriptUrl);
     });
 }
 // Path to check the 'tina' folder in the project root
 const projectRoot = process.cwd();
-const tinaFolderPath = require$$1.join(projectRoot, 'tina');
+const tinaFolderPath = require$$1.join(projectRoot, "tina");
 // Check if the 'tina' folder exists
 require$$0$4.access(tinaFolderPath, require$$0$4.constants.F_OK, (err) => {
     if (!err) {
@@ -22969,6 +22948,6 @@ require$$0$4.access(tinaFolderPath, require$$0$4.constants.F_OK, (err) => {
     }
     else {
         console.log('The "tina" folder does not exist. Please visit the following link to install the Tina package first:');
-        console.log('https://docs.astro.build/en/guides/cms/tina-cms');
+        console.log("https://docs.astro.build/en/guides/cms/tina-cms");
     }
 });

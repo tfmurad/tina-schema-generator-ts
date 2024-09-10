@@ -4,5 +4,7 @@ src/
 *.log
 *.ts
 *.map
+
+tsconfig.json
 node_modules/
 coverage/
