@@ -3,38 +3,6 @@ import * as fs$1 from 'fs';
 import fs__default from 'fs';
 import * as path from 'path';
 
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global Reflect, Promise, SuppressedError, Symbol, Iterator */
-
-
-function __spreadArray(to, from, pack) {
-    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-        if (ar || !(i in from)) {
-            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-            ar[i] = from[i];
-        }
-    }
-    return to.concat(ar || Array.prototype.slice.call(from));
-}
-
-typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
-    var e = new Error(message);
-    return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
-};
-
 function getDefaultExportFromCjs (x) {
 	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
 }
@@ -4772,19 +4740,19 @@ var matter$1 = /*@__PURE__*/getDefaultExportFromCjs(grayMatter);
 
 // Refactor main logic into a function
 function generateSchemas() {
-    var contentDir = path.join("src", "content");
-    var outputDir = path.join("tina", "collections");
-    var configDir = path.join("src", "config");
-    var globalDir = path.join("tina", "global");
+    const contentDir = path.join("src", "content");
+    const outputDir = path.join("tina", "collections");
+    const configDir = path.join("src", "config");
+    const globalDir = path.join("tina", "global");
     // Detect config file type
-    var configFilePathJs = path.join("tina", "config.js");
-    var configFilePathTs = path.join("tina", "config.ts");
-    var configFilePath = fs$1.existsSync(configFilePathTs)
+    const configFilePathJs = path.join("tina", "config.js");
+    const configFilePathTs = path.join("tina", "config.ts");
+    const configFilePath = fs$1.existsSync(configFilePathTs)
         ? configFilePathTs
         : configFilePathJs;
-    var rootContentDir = path.join("content");
-    var imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg"];
-    var humanize = function (content) {
+    const rootContentDir = path.join("content");
+    const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg"];
+    const humanize = (content) => {
         return content
             .replace(/^[\s_]+|[\s_]+$/g, "")
             .replace(/[_\s]+/g, " ")
@@ -4793,14 +4761,14 @@ function generateSchemas() {
             return m.toUpperCase();
         });
     };
-    var toCamelCase = function (str) {
+    const toCamelCase = (str) => {
         return str
-            .replace(/-./g, function (match) { return match.charAt(1).toUpperCase(); })
+            .replace(/-./g, (match) => match.charAt(1).toUpperCase())
             .replace(/\.md[x]?$/, "");
     };
-    var parseFields = function (data) {
-        return Object.keys(data).map(function (key) {
-            var fieldType = typeof data[key];
+    const parseFields = (data) => {
+        return Object.keys(data).map((key) => {
+            let fieldType = typeof data[key];
             if (fieldType === "object" && Array.isArray(data[key])) {
                 fieldType = "array";
             }
@@ -4837,11 +4805,11 @@ function generateSchemas() {
                 return { name: key, label: humanize(key), type: "datetime" };
             }
             if (fieldType === "string" &&
-                imageExtensions.some(function (ext) { return data[key].toLowerCase().endsWith(ext); })) {
+                imageExtensions.some((ext) => data[key].toLowerCase().endsWith(ext))) {
                 fieldType = "image";
             }
             if (fieldType === "object" && data[key] !== null) {
-                var fields = parseFields(data[key]);
+                const fields = parseFields(data[key]);
                 // Ensure there's at least one field defined for nested objects
                 if (fields.length === 0) {
                     fields.push({
@@ -4854,7 +4822,7 @@ function generateSchemas() {
                     name: key,
                     label: humanize(key),
                     type: "object",
-                    fields: fields,
+                    fields,
                 };
             }
             // default case to handle any unexpected types
@@ -4871,9 +4839,9 @@ function generateSchemas() {
             return { name: key, label: humanize(key), type: fieldType, fields: [] };
         });
     };
-    var generateCollectionSchema = function (name, collectionPath, markdown, type, filename) {
-        var data = matter$1(markdown).data;
-        var fields = parseFields(data);
+    const generateCollectionSchema = (name, collectionPath, markdown, type, filename) => {
+        const { data } = matter$1(markdown);
+        const fields = parseFields(data);
         fields.push({
             type: "rich-text",
             name: "body",
@@ -4881,15 +4849,15 @@ function generateSchemas() {
             description: "This is the markdown body",
             isBody: true,
         });
-        var schemaName = "".concat(name).concat(type === "list" ? "List" : "Single");
-        var readableName = "".concat(name).concat(type === "list" ? " List" : " Single");
-        var format = path.extname(filename).substring(1);
-        var schema = {
+        const schemaName = `${name}${type === "list" ? "List" : "Single"}`;
+        const readableName = `${name}${type === "list" ? " List" : " Single"}`;
+        const format = path.extname(filename).substring(1);
+        const schema = {
             label: humanize(readableName),
             name: schemaName,
-            path: "src/content/".concat(collectionPath),
-            format: format,
-            fields: fields,
+            path: `src/content/${collectionPath}`,
+            format,
+            fields,
             match: {
                 include: type === "list" ? "{-index,-template}" : "**/*",
                 exclude: type === "list" ? undefined : "{-index,-template}",
@@ -4906,12 +4874,12 @@ function generateSchemas() {
         }
         return schema;
     };
-    var generateConfigSchema = function (name, configData) {
-        var fields = parseFields(configData);
-        var schema = {
+    const generateConfigSchema = (name, configData) => {
+        const fields = parseFields(configData);
+        const schema = {
             label: humanize(name),
             name: name,
-            path: "src/config",
+            path: `src/config`,
             format: "json",
             ui: {
                 global: true,
@@ -4921,17 +4889,16 @@ function generateSchemas() {
                 },
             },
             match: {
-                include: "".concat(name),
+                include: `${name}`,
             },
-            fields: fields,
+            fields,
         };
         return schema;
     };
-    var walkSync = function (dir, filelist) {
-        if (filelist === void 0) { filelist = []; }
-        var files = fs$1.readdirSync(dir);
-        files.forEach(function (file) {
-            var filepath = path.join(dir, file);
+    const walkSync = (dir, filelist = []) => {
+        const files = fs$1.readdirSync(dir);
+        files.forEach((file) => {
+            const filepath = path.join(dir, file);
             if (fs$1.statSync(filepath).isDirectory()) {
                 filelist = walkSync(filepath, filelist);
             }
@@ -4941,30 +4908,30 @@ function generateSchemas() {
         });
         return filelist;
     };
-    var markdownFiles = walkSync(contentDir).filter(function (file) {
-        var isMdx = file.endsWith(".mdx");
-        var isMd = file.endsWith(".md");
+    const markdownFiles = walkSync(contentDir).filter((file) => {
+        const isMdx = file.endsWith(".mdx");
+        const isMd = file.endsWith(".md");
         return isMdx || isMd;
     });
-    var jsonFiles = fs$1.existsSync(configDir)
-        ? walkSync(configDir).filter(function (file) { return file.endsWith(".json"); })
+    const jsonFiles = fs$1.existsSync(configDir)
+        ? walkSync(configDir).filter((file) => file.endsWith(".json"))
         : [];
-    var schemas = {};
-    var configSchemas = {};
-    markdownFiles.forEach(function (file) {
-        var relativePath = path.relative(contentDir, file);
-        var _a = relativePath.split(path.sep), folder = _a[0], filename = _a[1];
-        var fileType = filename.startsWith("-index") ? "list" : "single";
-        var schemaName = "".concat(toCamelCase(folder)).concat(fileType === "list" ? "List" : "Single");
-        var markdown = fs$1.readFileSync(file, "utf8");
-        var schema = generateCollectionSchema(toCamelCase(folder), path.dirname(relativePath), markdown, fileType, filename);
+    const schemas = {};
+    const configSchemas = {};
+    markdownFiles.forEach((file) => {
+        const relativePath = path.relative(contentDir, file);
+        const [folder, filename] = relativePath.split(path.sep);
+        const fileType = filename.startsWith("-index") ? "list" : "single";
+        const schemaName = `${toCamelCase(folder)}${fileType === "list" ? "List" : "Single"}`;
+        const markdown = fs$1.readFileSync(file, "utf8");
+        const schema = generateCollectionSchema(toCamelCase(folder), path.dirname(relativePath), markdown, fileType, filename);
         schemas[schemaName] = schema;
     });
-    jsonFiles.forEach(function (file) {
+    jsonFiles.forEach((file) => {
         path.relative(configDir, file);
-        var configName = path.basename(file, ".json");
-        var configData = JSON.parse(fs$1.readFileSync(file, "utf8"));
-        var schema = generateConfigSchema(configName, configData);
+        const configName = path.basename(file, ".json");
+        const configData = JSON.parse(fs$1.readFileSync(file, "utf8"));
+        const schema = generateConfigSchema(configName, configData);
         configSchemas[configName] = schema;
     });
     if (!fs$1.existsSync(outputDir)) {
@@ -4973,86 +4940,86 @@ function generateSchemas() {
     if (!fs$1.existsSync(globalDir)) {
         fs$1.mkdirSync(globalDir, { recursive: true });
     }
-    Object.keys(schemas).forEach(function (key) {
-        var outputPath = path.join(outputDir, "".concat(key, ".js"));
-        var schemaContent = "export default ".concat(JSON.stringify(schemas[key], null, 2)
+    Object.keys(schemas).forEach((key) => {
+        const outputPath = path.join(outputDir, `${key}.js`);
+        const schemaContent = `export default ${JSON.stringify(schemas[key], null, 2)
             .replace(/"([^"]+)":/g, "$1:")
-            .replace(/"/g, "'"), ";");
+            .replace(/"/g, "'")};`;
         fs$1.writeFileSync(outputPath, schemaContent);
     });
-    Object.keys(configSchemas).forEach(function (key) {
-        var outputPath = path.join(globalDir, "".concat(key, ".js"));
-        var schemaContent = "export default ".concat(JSON.stringify(configSchemas[key], null, 2)
+    Object.keys(configSchemas).forEach((key) => {
+        const outputPath = path.join(globalDir, `${key}.js`);
+        const schemaContent = `export default ${JSON.stringify(configSchemas[key], null, 2)
             .replace(/"([^"]+)":/g, "$1:")
-            .replace(/"/g, "'"), ";");
+            .replace(/"/g, "'")};`;
         fs$1.writeFileSync(outputPath, schemaContent);
     });
     // Read config.js or config.ts content
-    var configContent = fs$1.readFileSync(configFilePath, "utf8");
+    let configContent = fs$1.readFileSync(configFilePath, "utf8");
     // Function to check if import statement exists in config.js or config.ts
-    var importExists = function (content, importPath) {
-        var importRegex = new RegExp("import\\s+\\w+\\s+from\\s+['\"`]".concat(importPath, "['\"`];"));
+    const importExists = (content, importPath) => {
+        const importRegex = new RegExp(`import\\s+\\w+\\s+from\\s+['"\`]${importPath}['"\`];`);
         return importRegex.test(content);
     };
     // Function to check if collection exists in config.js or config.ts
-    var collectionExists = function (content, collectionName) {
-        var collectionRegex = new RegExp("\\b".concat(collectionName, "\\b"));
+    const collectionExists = (content, collectionName) => {
+        const collectionRegex = new RegExp(`\\b${collectionName}\\b`);
         return collectionRegex.test(content);
     };
     // Update config.js or config.ts with import statements and collections
-    var importStatements = Object.keys(schemas)
-        .map(function (key) {
-        var importPath = "./collections/".concat(key);
+    const importStatements = Object.keys(schemas)
+        .map((key) => {
+        const importPath = `./collections/${key}`;
         if (!importExists(configContent, importPath)) {
-            return "import ".concat(key, " from \"").concat(importPath, "\";");
+            return `import ${key} from "${importPath}";`;
         }
         return null;
     })
         .filter(Boolean);
-    var globalImportStatements = Object.keys(configSchemas)
-        .map(function (key) {
-        var importPath = "./global/".concat(key);
+    const globalImportStatements = Object.keys(configSchemas)
+        .map((key) => {
+        const importPath = `./global/${key}`;
         if (!importExists(configContent, importPath)) {
-            return "import ".concat(key, " from \"").concat(importPath, "\";");
+            return `import ${key} from "${importPath}";`;
         }
         return null;
     })
         .filter(Boolean);
-    var allImportStatements = __spreadArray(__spreadArray([], importStatements, true), globalImportStatements, true);
+    const allImportStatements = [...importStatements, ...globalImportStatements];
     if (allImportStatements.length > 0) {
-        configContent = configContent.replace(/import { defineConfig } from ['"\`]tinacms['"\`];/, "import { defineConfig } from \"tinacms\";\n".concat(allImportStatements.join("\n")));
+        configContent = configContent.replace(/import { defineConfig } from ['"\`]tinacms['"\`];/, `import { defineConfig } from "tinacms";\n${allImportStatements.join("\n")}`);
     }
-    var currentCollections = (configContent.match(/collections:\s*\[\s*([\s\S]*?)\s*\],/) || [])[1] ||
+    const currentCollections = (configContent.match(/collections:\s*\[\s*([\s\S]*?)\s*\],/) || [])[1] ||
         "";
-    var newCollections = Object.keys(schemas)
+    const newCollections = Object.keys(schemas)
         .concat(Object.keys(configSchemas))
-        .filter(function (key) {
+        .filter((key) => {
         return !collectionExists(currentCollections, key);
     });
     if (newCollections.length > 0) {
-        var allCollections = currentCollections
+        const allCollections = currentCollections
             .split(",")
-            .map(function (collection) { return collection.trim(); })
+            .map((collection) => collection.trim())
             .filter(Boolean)
             .concat(newCollections)
             .join(",\n");
-        configContent = configContent.replace(/collections:\s*\[\s*([\s\S]*?)\s*\],/, "collections: [\n".concat(allCollections, "\n],"));
+        configContent = configContent.replace(/collections:\s*\[\s*([\s\S]*?)\s*\],/, `collections: [\n${allCollections}\n],`);
     }
     fs$1.writeFileSync(configFilePath, configContent);
     // Update package.json scripts
-    var packageJsonPath = path.join("package.json");
-    var packageJson = JSON.parse(fs$1.readFileSync(packageJsonPath, "utf8"));
-    Object.keys(packageJson.scripts).forEach(function (script) {
+    const packageJsonPath = path.join("package.json");
+    const packageJson = JSON.parse(fs$1.readFileSync(packageJsonPath, "utf8"));
+    Object.keys(packageJson.scripts).forEach((script) => {
         if (packageJson.scripts[script].includes("astro dev") &&
             !packageJson.scripts[script].includes('tinacms dev -c "astro dev"')) {
             packageJson.scripts[script] = packageJson.scripts[script].replace(/astro dev/g, 'tinacms dev -c "astro dev"');
         }
     });
     fs$1.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
-    var deleteFolderRecursive = function (dirPath) {
+    const deleteFolderRecursive = (dirPath) => {
         if (fs$1.existsSync(dirPath)) {
-            fs$1.readdirSync(dirPath).forEach(function (file) {
-                var currentPath = path.join(dirPath, file);
+            fs$1.readdirSync(dirPath).forEach((file) => {
+                const currentPath = path.join(dirPath, file);
                 if (fs$1.lstatSync(currentPath).isDirectory()) {
                     deleteFolderRecursive(currentPath);
                 }
