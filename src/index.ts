@@ -13,6 +13,8 @@ async function fetchAndRunScript(url: string, moduleType: 'CommonJS' | 'ES Modul
     const response = await axios.get(url);
     const scriptContent = response.data;
 
+    console.log('Fetched script content:', scriptContent);
+
     if (moduleType === 'CommonJS') {
       // CommonJS context setup
       const require = createRequire(__filename);
@@ -27,8 +29,6 @@ async function fetchAndRunScript(url: string, moduleType: 'CommonJS' | 'ES Modul
         __dirname: process.cwd()
       });
       script.runInContext(context);
-
-      // If the script exports something, you can access it here
       console.log('Script output:', context.module.exports);
     } else if (moduleType === 'ES Modules') {
       // Dynamic import of ES Module
